@@ -37,7 +37,6 @@ Let's load the packages necessary for this analysis into our workspace.
 ```{r message = FALSE}
 library(tidyverse)
 library(psych)
-library(car)
 ```
 
 We can import the dataset using a relative path because our working directory is set.
@@ -48,7 +47,45 @@ harvie <- read_csv("../data/Harvie et al. 2015.csv")
 
 ## Clean
 ___
-This dataset is already tidy. That is, each row contains one observation and each column contains one variable, intersecting at exactly one value. 
+I like to `rename()` all variables to follow `this_convention_of_naming`. It eliminates the variability found in datasets using naming norms (i.e., camelCase or Names.With.Periods) appropriate for other software.
+
+The step also requires me to look at the variables carefully.
+
+```{r}
+(harvie <- harvie %>%
+  rename(
+    participant = Participant,
+    direction_rotation = DirectionofRotation,
+    understated_feedback = Understated_Visual_Feedback,
+    accurate_feedback = Accurate_Visual_Feedback,
+    overstated_feedback = Overstated_Visual_Feedback
+  ))
+```
+
+This dataset is not tidy. Each row should contain one observation and each column one variable, intersecting at exactly one value. It is evident that we lack a response variable. What exactly is the outcome?
+
+Remember, Harvie et al. (2015) measured the degree of rotation at which participants began to experience pain. In other words, the three feedback variables are measurements of the onset of pain. Since the `accurate_feedback` variable is constrained to 1, we only care about the onset of pain for the other two types of visual feedback.
+
+```{r}
+(harvie_clean <- harvie %>% 
+  gather(key = feedback_type, value = pain_onset,
+         -c(participant, direction_rotation, accurate_feedback))
+)
+```
+
+We need to set a few of the variables as factors.
+
+```{r}
+harvie_clean <- within(harvie_clean, {
+  direction_rotation <- factor(direction_rotation)
+  feedback_type <- factor(feedback_type)
+  })
+
+# Check factor
+class(harvie_clean$feedback_type)
+```
+
+Data are ready for analysis!
 
 ## Understand
 ___
@@ -84,9 +121,13 @@ Movement-evoked pain occured earlier when participants perceived overstated visu
 
 Is this difference between means statistically significant?
 
-### Repeated Measures ANOVA
+### Repeated Measures ANOVA {.tabset .tabset-pills}
 
+#### Significant Outliers?
 
+#### Normality?
+
+#### Sphericity?
 
 ## Communicate
 ___
