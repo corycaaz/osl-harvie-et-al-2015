@@ -48,9 +48,45 @@ harvie <- read_csv("../data/Harvie et al. 2015.csv")
 
 ## Clean
 ___
+This dataset is already tidy. That is, each row contains one observation and each column contains one variable, intersecting at exactly one value. 
 
 ## Understand
 ___
+The **one-way repeated measures analysis of variance** compares the means of three of more groups in which each group, or participant, tests all conditions. Participants are not separated into control versus treatment groups. The present study is a within-subjects design because the investigators test three levels of visual feedback on all participants. [Each participant receives every condition](https://osf.io/z9pur/).
+
+The null and alternative hypotheses are:
+
+$$H_0: \text{the means of all related groups are equal} \\ H_1: \text{the mean of at least one related group is different}$$
+
+The one-way repeated measures ANOVA has five assumptions. Two are met via experimental design.
+
+1. **Continuous** dependent variable at the ratio or interval level.
+2. **Categorical** independent variable that is a factor of three or more levels.
+
+The remaining three assumptions are met after data collection.
+
+3. **No significant outliers** in any of the measurements of the participants. Outliers skew data and affect normality. One-way ANOVA is valid for distributions skewed in the same direction (e.g., distributions of each level positively skewed.). It is assessed with boxplots. 
+4. **Approximately normal distribution** of the independent variable for each level of the factor. Since the one-way ANOVA is robust, mild violations of normality can be tolerated if the number of observations is uniform across levels. The assumption is assessed with the Shapiro-Wilk test and density curves, or histograms.
+5. **Sphericity**, which states that the differences in variances between all pairs of groups (i.e., dependent variable) are equal. [This assumption](https://biostats.w.uib.no/test-for-sphericity-mauchly-test/) *must* be met. It is assessed with Mauchley's test.
+
+### Descriptive Statistics
+
+Summarize the three feedback conditions.
+
+```{r}
+(harvie_desc <- harvie %>%
+  select(ends_with("Feedback")) %>%
+  describe()
+)
+```
+
+Movement-evoked pain occured earlier when participants perceived overstated visual feedback (*M* = 0.93, *SD* = 0.12) than when the visual information was understated (*M* = 1.07, *SD* = 0.14).
+
+Is this difference between means statistically significant?
+
+### Repeated Measures ANOVA
+
+
 
 ## Communicate
 ___
