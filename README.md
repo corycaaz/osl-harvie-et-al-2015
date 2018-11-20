@@ -86,11 +86,7 @@ Data are ready for analysis!
 ## Understand
 The **one-way repeated measures analysis of variance** compares the means of three of more groups in which each group, or participant, tests all conditions. Participants are not separated into control versus treatment groups. The present study is a within-subjects design because the investigators test three levels of visual feedback on all participants. [Each participant receives every condition](https://osf.io/z9pur/).
 
-<<<<<<< HEAD
 The null and alternative hypotheses are rendered in the R markdown document.
-=======
-The null and alternative hypotheses can be found in the R markdown document.
->>>>>>> 171f75144065082a0a1e7ae5a5ca565115b814c9
 
 The one-way repeated measures ANOVA has five assumptions. Two are met via experimental design.
 
