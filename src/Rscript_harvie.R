@@ -65,7 +65,7 @@ harvie_aov_tidy$sumsq[4]
 (harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
 
 ### Significant Outliers?
-ggplot(harvie_clean, aes(x = feedback_type, y = pain_onset)) +
+harvie_boxplot <- ggplot(harvie_clean, aes(x = feedback_type, y = pain_onset)) +
   geom_boxplot()
 
 ### Normality?
@@ -111,7 +111,7 @@ harvie_desc <- harvie_desc %>%
   })
 
 # Visualize mean range of motion at onset of pain by condition
-ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
+harvie_plot <- ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
   geom_point(shape = 1, size = 4) +
   geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.2) +
   expand_limits(y = c(0.9, 1.10)) +
@@ -120,3 +120,11 @@ ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
                               "Accurate Visual Feedback", "Overstated Visual Feedback")) +
   labs(y = "Mean Range of Motion to Pain Onset", x = "Condition") +
   apa_theme
+
+####### SAVE PLOTS #######
+
+# Outlier assumption boxplot
+ggsave(filename = "harvie_boxplot.png", plot = harvie_boxplot, device = "png", path = "~/GitHub/osl-harvie-et-al-2015/data/results/")
+
+# Final figure
+ggsave(filename = "harvie_plot.png", plot = harvie_plot, device = "png", path = "~/GitHub/osl-harvie-et-al-2015/data/results/")

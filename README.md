@@ -1,2 +1,281 @@
 # Open Stats Lab One-way ANOVA in R Using Data from Harvie et al. (2015)
 A solution to Kevin P. McIntyre's Open Stats Lab activity on one-way ANOVA using a data set from Harvie et al. (2015). Written in R.
+
+# Open Stats Lab
+___
+Kevin P. McIntyre developed this amazing resource for students of psychology. Check out [Open Stats Lab](https://sites.trinity.edu/osl/) for a collection of all activities.
+
+Each activity includes an article from *Psychological Science*, a data set, and an activity to complete in SPSS. However, if you are an open source fanatic, you could also complete the activity in [JASP](https://jasp-stats.org/). For tips on how to use JASP, check out [this resource](https://osf.io/t56kg/) created by Buchanan, Hopke, and Donaldson (2018).
+
+I prefer to get my hands deep into the data. Dr. McIntyre does not *yet* offer an R activity to accompany the work of [Harvie et al. (2015)](https://journals.sagepub.com/stoken/default+domain/9QEFMbw9aRXb2pCVw9Kw/full), so here is one possible solution written in R.
+
+# Analysis
+___
+I will perform assumption checks for each test prior to running it. We already know that the data meet all assumptions, otherwise the authors would have used a different analytic approach. However, checking the assumptions is helpful because:
+
+1. reproducibility and accuracy can be verified; and
+2. if you are a student, then you should form the habit of testing assumptions.
+
+This analysis will follow the data science workflow advocated by [Garrett Grolemund and Hadley Wickham](https://r4ds.had.co.nz/introduction.html). First, we will set-up our session and import the data. Then, we must clean the data. Next, we will transform, model, and visualize the data to understand it. Finally, we will communicate our findings.
+
+## Import
+___
+Let's load the packages necessary for this analysis into our workspace.
+
+```r
+library(psych)
+library(broom)
+library(car)
+library(nlme)
+library(multcomp)
+library(tidyverse)
+```
+
+We can import the dataset using a relative path because our working directory is set.
+
+```r
+harvie <- read_csv("../data/Harvie et al. 2015.csv")
+```
+
+## Clean
+___
+I like to `rename()` all variables to follow `this_convention_of_naming`. It eliminates the variability found in datasets using naming norms (i.e., camelCase or Names.With.Periods) appropriate for other software.
+
+The step also requires me to look at the variables carefully.
+
+```r
+(harvie <- harvie %>%
+  rename(
+    participant = Participant,
+    direction_rotation = DirectionofRotation,
+    understated_feedback = Understated_Visual_Feedback,
+    accurate_feedback = Accurate_Visual_Feedback,
+    overstated_feedback = Overstated_Visual_Feedback
+  ))
+```
+
+This dataset is not tidy. Each row should contain one observation and each column one variable, intersecting at exactly one value. It is evident that we lack a response variable. What exactly is the outcome in question?
+
+Remember, Harvie et al. (2015) measured the degree of rotation at which participants began to experience pain. In other words, the three feedback variables are measurements of the onset of pain.
+
+Creation of a categorical response variable, `feedback_type`, and a continuous explanatory variable, `pain_onset`, requires elongating the data frame with key-value pairs. 
+
+```r
+(harvie_clean <- harvie %>% 
+    gather(key = feedback_type, value = pain_onset,
+           -c(participant, direction_rotation))
+)
+```
+
+Executing a [one-way repeated measures ANOVA in R](https://www.uvm.edu/~dhowell/StatPages/R/RepeatedMeasuresAnovaR.html) requires one predictor as a factor of three or more levels.
+
+Remember, we have six conditions in this data set. Direction of rotation (i.e., left or right) and visual feedback type (i.e., understated, accurate, or overstated). Dr. McIntyre reminds us of this fact in [the insturctions for this activity](https://drive.google.com/file/d/0Bz-rhZ21ShvORkZXb0llWDg4RWs/view).
+
+Currently, these conditions are separated into two variables: `direction_rotation` and `feedback_type`. Both are factors, so we must define them as such in R.
+
+**Note**: For our purposes, it does not matter whether 1 is mapped to "left" and 2 to "right", or vice versa, for `direction_rotation`. If it helps you reason through the analysis conceptually, then feel free to code this within-subjects factor with labels in your call to `factor()`. As long as we understand that these numbers convey direction, the one-way repeated measures ANOVA will execute properly.
+
+Finally, it is important to realize that our `participant` variable *must* be transformed to a factor. Why? Well, our independent variable was applied to each participant. Each subject appears in all groups. Mathematically, we need to remove individual differences between subjects from the within-groups variability (for a more detailed explanation of this topic, go [here](https://statistics.laerd.com/statistical-guides/repeated-measures-anova-statistical-guide.php)). This can be accomplished when we treat each subject as a level of a factor.
+
+```r
+harvie_clean <- within(harvie_clean, {
+  direction_rotation <- factor(direction_rotation)
+  feedback_type <- factor(feedback_type)
+  participant <- factor(participant)
+  })
+```
+
+Data are ready for analysis!
+
+## Understand
+___
+The **one-way repeated measures analysis of variance** compares the means of three of more groups in which each group, or participant, tests all conditions. Participants are not separated into control versus treatment groups. The present study is a within-subjects design because the investigators test three levels of visual feedback on all participants. [Each participant receives every condition](https://osf.io/z9pur/).
+
+The null and alternative hypotheses are:
+
+$$H_0: \text{the means of all related groups are equal} \\ H_1: \text{the mean of at least one related group is different}$$
+
+The one-way repeated measures ANOVA has five assumptions. Two are met via experimental design.
+
+1. **Continuous** dependent variable at the ratio or interval level.
+
+2. **Categorical** independent variable that is a factor of three or more levels.
+
+The remaining three assumptions are met after data collection.
+
+3. **No significant outliers** in any of the measurements of the participants. Outliers skew data and affect normality. One-way ANOVA is valid for distributions skewed in the same direction (e.g., distributions of each level positively skewed.). It is assessed with boxplots.
+
+4. **Approximately normal distribution** of the independent variable for each level of the factor. Since the one-way ANOVA is robust, mild violations of normality can be tolerated if the number of observations is uniform across levels. The assumption is assessed with the Shapiro-Wilk test and density curves, or histograms.
+
+5. **Sphericity**, which states that the differences in variances between all pairs of groups (i.e., dependent variable) are equal. [This assumption](https://biostats.w.uib.no/test-for-sphericity-mauchly-test/) *must* be met. It is assessed with Mauchley's test.
+
+### Descriptive Statistics
+
+Summarize the three feedback conditions.
+
+```r
+(harvie_desc <- harvie %>%
+  select(ends_with("feedback")) %>%
+  describe()
+)
+```
+
+Movement-evoked pain occured earlier when participants perceived overstated visual feedback (*M* = 0.93, *SD* = 0.12) than when the visual information was understated (*M* = 1.07, *SD* = 0.14).
+
+Is this difference between means statistically significant?
+
+### Repeated Measures ANOVA {.tabset .tabset-pills}
+R needs to know how we want to separate the residual sum of squares. We do this with the `Error(participant/direction_rotation)` argument passed to the `aov()` function. This argument [determines the statistical test performed](https://www.sas.upenn.edu/~baron/from_cattell/rpsych/rpsych.html#htoc60). We separate the error terms to remove individual differences between subjects, and the interaction of participants versus direction of rotation,  from the within-groups variability.
+
+Essentially, the `/` in `Error(participant/direction_rotation)` tells R that the direction of rotation is *nested* within individual participants. Each participant was asked to look left, then right, for all three types of visual feedback.
+
+```r
+# Create the analysis of variance object
+harvie_aov <- aov(pain_onset ~ feedback_type + Error(participant/direction_rotation),
+                  data = harvie_clean)
+
+# Summarize the aov object
+summary(harvie_aov)
+```
+
+We can calculate the effect size of a one-way repeated measures ANOVA, partial eta-squared, with [this equation](http://core.ecu.edu/psyc/wuenschk/MV/RM-ANOVA/RM1_Eta-Squared.pdf):
+
+$$\eta_p^2 = \frac{SS_\text{Feedback type}}{SS_\text{Feedback type} + SS_\text{Residuals}}$$
+We *could* obtain the values for the $\eta_p^2$ equation by printing `summary(harvie_aov)` to the console and manually entering the sum of squares.
+
+Instead, in the spirit of avoiding mistakes, let's extract the relevant information from the `aov` object as a data frame.
+
+```r
+(harvie_aov_tidy <- tidy(harvie_aov))
+```
+
+Then, we collect the sum of squares and plug them into the equation.
+
+```r
+# Collect sum of squares
+harvie_aov_tidy$sumsq[3]
+harvie_aov_tidy$sumsq[4]
+
+# Calculate partial eta-squared
+(harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
+```
+
+The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`.
+
+#### Significant Outliers?
+```r
+ggplot(harvie_clean, aes(x = feedback_type, y = pain_onset)) +
+  geom_boxplot()
+```
+
+
+There are no outliers.
+
+#### Normality?
+```r
+shapiro.test(harvie$understated_feedback)
+```
+
+Since *p* > 0.05, we accept the null hypothesis of the Shapiro-Wilk test: the distribution of pain for understated visual feedback is normal.
+
+```r
+shapiro.test(harvie$overstated_feedback)
+```
+
+Since *p* > 0.05, we accept the null hypothesis of the Shapiro-Wilk test: the distribution of pain for overstated visual feedback is normal.
+
+#### Sphericity?
+Sphericity is difficult to test. Here is one option that uses a linear model. We will use `car::Anova` to created a new one-way repeated-measure ANOVA.
+
+```r
+harvie_matrix <- as.matrix(harvie)
+harvie_matrix <- harvie_matrix[, -c(1, 2)]
+model <- lm(harvie_matrix ~ 1)
+design <- factor(c("understated_feedback", "accurate_feedback", "overstated_feedback"))
+options(contrasts = c("contr.sum", "contr.poly"))
+results <- Anova(model, idata = data.frame(design), idesign = ~design, type="III")
+summary(results, multivariate = FALSE)
+```
+
+Here, the *p* < 0.05, so we accept the alternative hypothesis: the differences in variances are **not** equal. The assumption of sphericity is not met. Isn't that a problem?
+
+According to [Dr. Erin M. Buchanan](https://www.youtube.com/watch?v=vl4nPUxhQTk), certain types of research questions do not need to meet the assumption of sphericiy. Perhaps that is the case here.
+
+If anyone knows a better way to calculate this assumption in R, please let me know. I checked the sphericity assumption in JASP as well--no luck.
+
+**Note**: If you repeat the above sphericity calculation after splitting the data according to `direction_rotation`, thereby creating two matrices each with 24 rows, Mauchly's test will be significant for one but not the other. That is, the assumption of sphericity is met for half of the conditions. This leads me to believe that testing for sphericity properly in R may depend on how our factors are nested.
+
+### Pairwise Comparisons
+Now we must conduct pairwise comparisons with Bonferroni corrections.
+
+We accomplish this by constructing yet *another* repeated measures model. It might be evident that each model has its pros and cons. The first enabled us to partition the sum of squares correctly. The second was useful for testing the sphericity assumption.
+
+This third method employs the `nlme::lme` and `multcomp::glht` functions to perform post-hoc tests.
+
+Constructing the lme model matches the syntax for the `aov` object we created earlier with one notable exception. Instead of a call to `Error()`, it is necessary to specify the `random` parameter. 
+
+Make sure your call to `glht` specifies the main predictor as the `linfct` argument. 
+
+```r
+# Construct repeated measures ANOVA
+lme_harvie <- lme(pain_onset ~ feedback_type, 
+                  random = ~1|participant/direction_rotation, data = harvie_clean)
+
+# Perform pairwise comparisons with Bonferroni correction
+summary(glht(lme_harvie, linfct=mcp(feedback_type = "Tukey")),
+        test = adjusted(type = "bonferroni"))
+```
+
+Pairwise comparisons revealed significant relationships between all conditions (*p*s < .01).
+
+### Visualize
+Time to create a plot depicting the mean range of motion at onset of pain by visual feedback condition.
+
+First, let's create a APA-style theme.
+
+```r
+apa_theme <- theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12))
+```
+
+Next, we prepare the data frame. We can use the object created earlier for descriptive statistics. It is necessary to transform the rownames into a factor variable. Specification of the `levels` argument will order the visual feedback from greatest to least.
+
+```r
+harvie_desc <- harvie_desc %>%
+  mutate(feedback_type = row.names(harvie_desc)) %>%
+  within({
+    feedback_type <- factor(feedback_type,levels = c("understated_feedback", 
+                                                     "accurate_feedback", "overstated_feedback"))
+  })
+```
+
+Execute an APA-style figure.
+
+```r
+ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
+  geom_point(shape = 1, size = 4) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.2) +
+  expand_limits(y = c(0.9, 1.10)) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 5)) +
+  scale_x_discrete(labels = c("Understated Visual Feedback", 
+                              "Accurate Visual Feedback", "Overstated Visual Feedback")) +
+  labs(y = "Mean Range of Motion to Pain Onset", x = "Condition") +
+  apa_theme
+```
+
+**Figure 1**. Mean range of motion at the onset of pain across the three types of visual feedback.
+
+## Communicate
+___
+The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`. Pairwise comparisons revealed significant relationships between all conditions (*p*s < .01).
+
+# Acknowledgements
+___
+I am thankful for my advisor, Dr. Brandt A. Smith for introducing me to R, JASP, and OSL. The discipline of psychology is advocating for preregistered, open materials. His encouragement to utilize open data and open source software has positioned me in the middle of the reproducible movement.
+
+I would still be clicking checkboxes and dropdowns to analyze data if it were not for [DataCamp](https://www.datacamp.com), [Rose Maier](https://rstudio-pubs-static.s3.amazonaws.com/65059_586f394d8eb84f84b1baaf56ffb6b47f.html), [Alboukadel Kassambara](http://www.sthda.com/english/wiki/r-software), [Jonathan Baron](https://www.sas.upenn.edu/~baron/from_cattell/rpsych/rpsych.html#htoc60), and the team behind [personality-project](http://personality-project.org/r/r.guide.html#withinone).
