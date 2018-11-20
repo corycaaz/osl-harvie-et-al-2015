@@ -62,5 +62,34 @@ harvie_aov_tidy$sumsq[4]
 (harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
 
 ### Significant Outliers?
+ggplot(harvie_clean, aes(x = feedback_type, y = pain_onset)) +
+  geom_boxplot()
+
 ### Normality?
+shapiro.test(harvie$understated_feedback)
+shapiro.test(harvie$overstated_feedback)
+
 ### Sphericity?
+harvie_matrix <- as.matrix(harvie)
+harvie_matrix <- harvie_matrix[, -c(1, 2)]
+model <- lm(harvie_matrix ~ 1)
+design <- factor(c("understated_feedback", "accurate_feedback", "overstated_feedback"))
+options(contrasts = c("contr.sum", "contr.poly"))
+results <- Anova(model, idata = data.frame(design), idesign = ~design, type="III")
+summary(results, multivariate = FALSE)
+
+####### PAIRWISE COMPARISONS #######
+
+lme_harvie <- lme(pain_onset ~ feedback_type, random = ~1|participant/direction_rotation, data = harvie_clean)
+summary(glht(lme_harvie, linfct=mcp(Material = "Tukey")), test = adjusted(type = "bonferroni"))
+
+####### VISUALIZE #######
+
+# Construct the APA theme
+apa_theme <- theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12))

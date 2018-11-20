@@ -107,12 +107,15 @@ $$H_0: \text{the means of all related groups are equal} \\ H_1: \text{the mean o
 The one-way repeated measures ANOVA has five assumptions. Two are met via experimental design.
 
 1. **Continuous** dependent variable at the ratio or interval level.
+
 2. **Categorical** independent variable that is a factor of three or more levels.
 
 The remaining three assumptions are met after data collection.
 
-3. **No significant outliers** in any of the measurements of the participants. Outliers skew data and affect normality. One-way ANOVA is valid for distributions skewed in the same direction (e.g., distributions of each level positively skewed.). It is assessed with boxplots. 
+3. **No significant outliers** in any of the measurements of the participants. Outliers skew data and affect normality. One-way ANOVA is valid for distributions skewed in the same direction (e.g., distributions of each level positively skewed.). It is assessed with boxplots.
+
 4. **Approximately normal distribution** of the independent variable for each level of the factor. Since the one-way ANOVA is robust, mild violations of normality can be tolerated if the number of observations is uniform across levels. The assumption is assessed with the Shapiro-Wilk test and density curves, or histograms.
+
 5. **Sphericity**, which states that the differences in variances between all pairs of groups (i.e., dependent variable) are equal. [This assumption](https://biostats.w.uib.no/test-for-sphericity-mauchly-test/) *must* be met. It is assessed with Mauchley's test.
 
 ### Descriptive Statistics
@@ -164,14 +167,71 @@ harvie_aov_tidy$sumsq[4]
 (harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
 ```
 
+The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`.
+
 #### Significant Outliers?
+```{r}
+ggplot(harvie_clean, aes(x = feedback_type, y = pain_onset)) +
+  geom_boxplot()
+```
+
+There are no outliers.
 
 #### Normality?
+```{r}
+shapiro.test(harvie$understated_feedback)
+```
+
+Since *p* > 0.05, we accept the null hypothesis of the Shapiro-Wilk test: the distribution of pain for understated visual feedback is normal.
+
+```{r}
+shapiro.test(harvie$overstated_feedback)
+```
+
+Since *p* > 0.05, we accept the null hypothesis of the Shapiro-Wilk test: the distribution of pain for overstated visual feedback is normal.
 
 #### Sphericity?
+Sphericity is difficult to test. Here is one option that uses a linear model.
+
+```{r}
+harvie_matrix <- as.matrix(harvie)
+harvie_matrix <- harvie_matrix[, -c(1, 2)]
+model <- lm(harvie_matrix ~ 1)
+design <- factor(c("understated_feedback", "accurate_feedback", "overstated_feedback"))
+options(contrasts = c("contr.sum", "contr.poly"))
+results <- Anova(model, idata = data.frame(design), idesign = ~design, type="III")
+summary(results, multivariate = FALSE)
+```
+
+Here, the *p* < 0.05, so we accept the alternative hypothesis: the differences in variances are **not** equal.
+
+According to [Dr. Erin M. Buchanan](https://www.youtube.com/watch?v=vl4nPUxhQTk), certain types of research questions do not need to meet the assumption of sphericiy. Perhaps that is the case here.
+
+If anyone knows a better way to calculate this assumption in R, please let me know.
+
+**Note**: If you repeat the above sphericity after splitting the data according to `direction_rotation`, thereby creating two matrices each with 24 rows, Mauchly's test will be significant for one but not the other. That is, the assumption of sphericity is met for half of the conditions. This leads me to believe that testing for sphericity properly in R depends on how our factors are nested.
+
+### Pairwise Comparisons
+Now we must conduct pairwise comparisons with Bonferroni corrections.
+
+### Visualize
+Time to create a dynamite plot depicting the mean range of motion at onset of pain by visual feedback condition.
+
+First, let's create a APA-style theme.
+
+```{r}
+apa_theme <- theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(),
+        plot.title = element_text(hjust = 0.5),
+        text = element_text(size = 12))
+```
 
 ## Communicate
 ___
+The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`.
 
 # Acknowledgements
 ___
