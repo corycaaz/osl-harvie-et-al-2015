@@ -86,9 +86,7 @@ Data are ready for analysis!
 ## Understand
 The **one-way repeated measures analysis of variance** compares the means of three of more groups in which each group, or participant, tests all conditions. Participants are not separated into control versus treatment groups. The present study is a within-subjects design because the investigators test three levels of visual feedback on all participants. [Each participant receives every condition](https://osf.io/z9pur/).
 
-The null and alternative hypotheses are:
-
-<img src="https://latex.codecogs.com/gif.latex?H_0: \text{the means of all related groups are equal} \\ H_1: \text{the mean of at least one related group is different} " />
+The null and alternative hypotheses can be found in the R markdown document.
 
 The one-way repeated measures ANOVA has five assumptions. Two are met via experimental design.
 
@@ -134,8 +132,7 @@ summary(harvie_aov)
 
 We can calculate the effect size of a one-way repeated measures ANOVA, partial eta-squared, with [this equation](http://core.ecu.edu/psyc/wuenschk/MV/RM-ANOVA/RM1_Eta-Squared.pdf):
 
-$$\eta_p^2 = \frac{SS_\text{Feedback type}}{SS_\text{Feedback type} + SS_\text{Residuals}}$$
-We *could* obtain the values for the $\eta_p^2$ equation by printing `summary(harvie_aov)` to the console and manually entering the sum of squares.
+We *could* obtain the values for the partial eta-squared equation by printing `summary(harvie_aov)` to the console and manually entering the sum of squares.
 
 Instead, in the spirit of avoiding mistakes, let's extract the relevant information from the `aov` object as a data frame.
 
@@ -154,7 +151,7 @@ harvie_aov_tidy$sumsq[4]
 (harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
 ```
 
-The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`.
+The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001. (Note: effect size excluded in README.md)
 
 #### Significant Outliers?
 ```r
@@ -265,7 +262,7 @@ ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
 **Figure 1**. Mean range of motion at the onset of pain across the three types of visual feedback.
 
 ## Communicate
-The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`. Pairwise comparisons revealed significant relationships between all conditions (*p*s < .01).
+The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001. (Note: effect size excluded in README.md) Pairwise comparisons revealed significant relationships between all conditions (*p*s < .01).
 
 # Acknowledgements
 I am thankful for my advisor, Dr. Brandt A. Smith for introducing me to R, JASP, and OSL. The discipline of psychology is advocating for preregistered, open materials. His encouragement to utilize open data and open source software has positioned me in the middle of the reproducible movement.
