@@ -62,27 +62,35 @@ The step also requires me to look at the variables carefully.
   ))
 ```
 
-This dataset is not tidy. Each row should contain one observation and each column one variable, intersecting at exactly one value. It is evident that we lack a response variable. What exactly is the outcome?
+This dataset is not tidy. Each row should contain one observation and each column one variable, intersecting at exactly one value. It is evident that we lack a response variable. What exactly is the outcome in question?
 
-Remember, Harvie et al. (2015) measured the degree of rotation at which participants began to experience pain. In other words, the three feedback variables are measurements of the onset of pain. Since the `accurate_feedback` variable is constrained to 1, we only care about the onset of pain for the other two types of visual feedback.
+Remember, Harvie et al. (2015) measured the degree of rotation at which participants began to experience pain. In other words, the three feedback variables are measurements of the onset of pain.
+
+Creation of a categorical response variable, `feedback_type`, and a continuous explanatory variable, `pain_onset`, requires elongating the data frame with key-value pairs. 
 
 ```{r}
 (harvie_clean <- harvie %>% 
-  gather(key = feedback_type, value = pain_onset,
-         -c(participant, direction_rotation, accurate_feedback))
+    gather(key = feedback_type, value = pain_onset,
+           -c(participant, direction_rotation))
 )
 ```
 
-We need to set a few of the variables as factors.
+Executing a [one-way repeated measures ANOVA in R](https://www.uvm.edu/~dhowell/StatPages/R/RepeatedMeasuresAnovaR.html) requires one predictor as a factor of three or more levels.
+
+Remember, we have six conditions in this data set. Direction of rotation (i.e., left or right) and visual feedback type (i.e., understated, accurate, or overstated). Dr. McIntyre reminds us of this fact in [the insturctions for this activity](https://drive.google.com/file/d/0Bz-rhZ21ShvORkZXb0llWDg4RWs/view).
+
+Currently, these conditions are separated into two variables: `direction_rotation` and `feedback_type`. Both are factors, so we must define them as such in R.
+
+**Note**: For our purposes, it does not matter whether 1 is mapped to "left" and 2 to "right", or vice versa, for `direction_rotation`. If it helps you reason through the analysis conceptually, then feel free to code this within-subjects factor with labels in your call to `factor()`. As long as we understand that these numbers convey direction, the one-way repeated measures ANOVA will execute properly.
+
+Finally, it is important to realize that our `participant` variable *must* be transformed to a factor. Why? Well, our independent variable was applied to each participant. Each subject appears in all groups. Mathematically, we need to remove individual differences between subjects from the within-groups variability (for a more detailed explanation of this topic, go [here](https://statistics.laerd.com/statistical-guides/repeated-measures-anova-statistical-guide.php)). This can be accomplished when we treat each subject as a level of a factor.
 
 ```{r}
 harvie_clean <- within(harvie_clean, {
   direction_rotation <- factor(direction_rotation)
   feedback_type <- factor(feedback_type)
+  participant <- factor(participant)
   })
-
-# Check factor
-class(harvie_clean$feedback_type)
 ```
 
 Data are ready for analysis!
