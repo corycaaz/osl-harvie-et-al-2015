@@ -41,7 +41,7 @@ harvie_clean <- within(harvie_clean, {
 ####### DESCRIPTIVE STATISTICS #######
 
 (harvie_desc <- harvie %>%
-  select(ends_with("Feedback")) %>%
+  select(ends_with("feedback")) %>%
   describe()
 )
 
@@ -101,3 +101,22 @@ apa_theme <- theme_bw() +
         axis.line = element_line(),
         plot.title = element_text(hjust = 0.5),
         text = element_text(size = 12))
+
+# Rownames to variable
+harvie_desc <- harvie_desc %>%
+  mutate(feedback_type = row.names(harvie_desc)) %>%
+  within({
+    feedback_type <- factor(feedback_type,levels = c("understated_feedback", 
+                                                     "accurate_feedback", "overstated_feedback"))
+  })
+
+# Visualize mean range of motion at onset of pain by condition
+ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
+  geom_point(shape = 1, size = 4) +
+  geom_errorbar(aes(ymin = mean-se, ymax = mean+se), width = 0.2) +
+  expand_limits(y = c(0.9, 1.10)) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 5)) +
+  scale_x_discrete(labels = c("Understated Visual Feedback", 
+                              "Accurate Visual Feedback", "Overstated Visual Feedback")) +
+  labs(y = "Mean Range of Motion to Pain Onset", x = "Condition") +
+  apa_theme
