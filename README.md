@@ -88,7 +88,7 @@ The **one-way repeated measures analysis of variance** compares the means of thr
 
 The null and alternative hypotheses are:
 
-$$H_0: \text{the means of all related groups are equal} \\ H_1: \text{the mean of at least one related group is different}$$
+$$ H_0: \text{the means of all related groups are equal} \\ H_1: \text{the mean of at least one related group is different} $$
 
 The one-way repeated measures ANOVA has five assumptions. Two are met via experimental design.
 
