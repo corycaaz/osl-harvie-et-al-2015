@@ -2,7 +2,6 @@
 A solution to Kevin P. McIntyre's Open Stats Lab activity on one-way ANOVA using a data set from Harvie et al. (2015). Written in R.
 
 # Open Stats Lab
-___
 Kevin P. McIntyre developed this amazing resource for students of psychology. Check out [Open Stats Lab](https://sites.trinity.edu/osl/) for a collection of all activities.
 
 Each activity includes an article from *Psychological Science*, a data set, and an activity to complete in SPSS. However, if you are an open source fanatic, you could also complete the activity in [JASP](https://jasp-stats.org/). For tips on how to use JASP, check out [this resource](https://osf.io/t56kg/) created by Buchanan, Hopke, and Donaldson (2018).
@@ -10,7 +9,6 @@ Each activity includes an article from *Psychological Science*, a data set, and 
 I prefer to get my hands deep into the data. Dr. McIntyre does not *yet* offer an R activity to accompany the work of [Harvie et al. (2015)](https://journals.sagepub.com/stoken/default+domain/9QEFMbw9aRXb2pCVw9Kw/full), so here is one possible solution written in R.
 
 # Analysis
-___
 I will perform assumption checks for each test prior to running it. We already know that the data meet all assumptions, otherwise the authors would have used a different analytic approach. However, checking the assumptions is helpful because:
 
 1. reproducibility and accuracy can be verified; and
@@ -19,7 +17,6 @@ I will perform assumption checks for each test prior to running it. We already k
 This analysis will follow the data science workflow advocated by [Garrett Grolemund and Hadley Wickham](https://r4ds.had.co.nz/introduction.html). First, we will set-up our session and import the data. Then, we must clean the data. Next, we will transform, model, and visualize the data to understand it. Finally, we will communicate our findings.
 
 ## Import
-___
 Let's load the packages necessary for this analysis into our workspace.
 
 ```r
@@ -38,7 +35,6 @@ harvie <- read_csv("../data/Harvie et al. 2015.csv")
 ```
 
 ## Clean
-___
 I like to `rename()` all variables to follow `this_convention_of_naming`. It eliminates the variability found in datasets using naming norms (i.e., camelCase or Names.With.Periods) appropriate for other software.
 
 The step also requires me to look at the variables carefully.
@@ -88,7 +84,6 @@ harvie_clean <- within(harvie_clean, {
 Data are ready for analysis!
 
 ## Understand
-___
 The **one-way repeated measures analysis of variance** compares the means of three of more groups in which each group, or participant, tests all conditions. Participants are not separated into control versus treatment groups. The present study is a within-subjects design because the investigators test three levels of visual feedback on all participants. [Each participant receives every condition](https://osf.io/z9pur/).
 
 The null and alternative hypotheses are:
@@ -110,7 +105,6 @@ The remaining three assumptions are met after data collection.
 5. **Sphericity**, which states that the differences in variances between all pairs of groups (i.e., dependent variable) are equal. [This assumption](https://biostats.w.uib.no/test-for-sphericity-mauchly-test/) *must* be met. It is assessed with Mauchley's test.
 
 ### Descriptive Statistics
-
 Summarize the three feedback conditions.
 
 ```r
@@ -124,7 +118,7 @@ Movement-evoked pain occured earlier when participants perceived overstated visu
 
 Is this difference between means statistically significant?
 
-### Repeated Measures ANOVA {.tabset .tabset-pills}
+### Repeated Measures ANOVA
 R needs to know how we want to separate the residual sum of squares. We do this with the `Error(participant/direction_rotation)` argument passed to the `aov()` function. This argument [determines the statistical test performed](https://www.sas.upenn.edu/~baron/from_cattell/rpsych/rpsych.html#htoc60). We separate the error terms to remove individual differences between subjects, and the interaction of participants versus direction of rotation,  from the within-groups variability.
 
 Essentially, the `/` in `Error(participant/direction_rotation)` tells R that the direction of rotation is *nested* within individual participants. Each participant was asked to look left, then right, for all three types of visual feedback.
@@ -167,7 +161,7 @@ The one-way repeated-measure ANOVA indicated that visual feedback conveying info
 ggplot(harvie_clean, aes(x = feedback_type, y = pain_onset)) +
   geom_boxplot()
 ```
-
+![Significant outliers assumption tested with a boxplot.](https://github.com/corycaaz/osl-harvie-et-al-2015/blob/master/data/results/harvie_boxplot.png)
 
 There are no outliers.
 
@@ -271,11 +265,9 @@ ggplot(harvie_desc, aes(x = feedback_type, y = mean)) +
 **Figure 1**. Mean range of motion at the onset of pain across the three types of visual feedback.
 
 ## Communicate
-___
 The one-way repeated-measure ANOVA indicated that visual feedback conveying information about one's range of motion had a significant impact on the onset of pain, *F*(2, 94) = 18.9, *p* < .001, $\eta_p^2$ = `r round(harvie_eta, digits = 2)`. Pairwise comparisons revealed significant relationships between all conditions (*p*s < .01).
 
 # Acknowledgements
-___
 I am thankful for my advisor, Dr. Brandt A. Smith for introducing me to R, JASP, and OSL. The discipline of psychology is advocating for preregistered, open materials. His encouragement to utilize open data and open source software has positioned me in the middle of the reproducible movement.
 
 I would still be clicking checkboxes and dropdowns to analyze data if it were not for [DataCamp](https://www.datacamp.com), [Rose Maier](https://rstudio-pubs-static.s3.amazonaws.com/65059_586f394d8eb84f84b1baaf56ffb6b47f.html), [Alboukadel Kassambara](http://www.sthda.com/english/wiki/r-software), [Jonathan Baron](https://www.sas.upenn.edu/~baron/from_cattell/rpsych/rpsych.html#htoc60), and the team behind [personality-project](http://personality-project.org/r/r.guide.html#withinone).
