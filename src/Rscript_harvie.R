@@ -3,6 +3,9 @@
 library(tidyverse)
 library(psych)
 library(broom)
+library(car)
+library(nlme)
+library(multcomp)
 
 # Set working directory
 setwd("~/GitHub/osl-harvie-et-al-2015/src")
@@ -80,8 +83,13 @@ summary(results, multivariate = FALSE)
 
 ####### PAIRWISE COMPARISONS #######
 
-lme_harvie <- lme(pain_onset ~ feedback_type, random = ~1|participant/direction_rotation, data = harvie_clean)
-summary(glht(lme_harvie, linfct=mcp(Material = "Tukey")), test = adjusted(type = "bonferroni"))
+# Construct repeated measures ANOVA
+lme_harvie <- lme(pain_onset ~ feedback_type, 
+                  random = ~1|participant/direction_rotation, data = harvie_clean)
+
+# Perform pairwise comparisons with Bonferroni correction
+summary(glht(lme_harvie, linfct=mcp(feedback_type = "Tukey")),
+        test = adjusted(type = "bonferroni"))
 
 ####### VISUALIZE #######
 
