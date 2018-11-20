@@ -2,6 +2,7 @@
 
 library(tidyverse)
 library(psych)
+library(broom)
 
 # Set working directory
 setwd("~/GitHub/osl-harvie-et-al-2015/src")
@@ -43,12 +44,22 @@ harvie_clean <- within(harvie_clean, {
 
 ####### ONE-WAY REPEATED MEASURES ANOVA #######
 
-# Create the analysis of variance
+# Create the analysis of variance object
 harvie_aov <- aov(pain_onset ~ feedback_type + Error(participant/direction_rotation),
                   data = harvie_clean)
 
-# Summary of aov object
+# Summarize the aov object
 summary(harvie_aov)
+
+# Extract sum of squares
+(harvie_aov_tidy <- tidy(harvie_aov))
+
+# Collect sum of squares
+harvie_aov_tidy$sumsq[3]
+harvie_aov_tidy$sumsq[4]
+
+# Calculate partial eta-squared
+(harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
 
 ### Significant Outliers?
 ### Normality?

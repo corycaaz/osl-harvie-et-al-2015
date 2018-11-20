@@ -37,6 +37,7 @@ Let's load the packages necessary for this analysis into our workspace.
 ```{r message = FALSE}
 library(tidyverse)
 library(psych)
+library(broom)
 ```
 
 We can import the dataset using a relative path because our working directory is set.
@@ -130,6 +131,38 @@ Movement-evoked pain occured earlier when participants perceived overstated visu
 Is this difference between means statistically significant?
 
 ### Repeated Measures ANOVA {.tabset .tabset-pills}
+R needs to know how we want to separate the residual sum of squares. We do this with the `Error(participant/direction_rotation)` argument passed to the `aov()` function. This argument [determines the statistical test performed](https://www.sas.upenn.edu/~baron/from_cattell/rpsych/rpsych.html#htoc60). We separate the error terms to remove individual differences between subjects, and the interaction of participants versus direction of rotation,  from the within-groups variability.
+
+Essentially, the `/` in `Error(participant/direction_rotation)` tells R that the direction of rotation is *nested* within individual participants. Each participant was asked to look left, then right, for all three types of visual feedback.
+
+```{r}
+# Create the analysis of variance object
+harvie_aov <- aov(pain_onset ~ feedback_type + Error(participant/direction_rotation),
+                  data = harvie_clean)
+
+# Summarize the aov object
+summary(harvie_aov)
+```
+
+We can calculate the effect size of a one-way repeated measures ANOVA, partial eta-squared, with [this equation](http://core.ecu.edu/psyc/wuenschk/MV/RM-ANOVA/RM1_Eta-Squared.pdf):
+
+$$\eta_p^2 = \frac{SS_\text{Feedback type}}{SS_\text{Feedback type} + SS_\text{Residuals}}$$
+We *could* obtain the values for the $\eta_p^2$ equation by printing `summary(harvie_aov)` to the console and manually entering the sum of squares.
+
+Instead, in the spirit of avoiding mistakes, let's extract the relevant information from the `aov` object as a data frame.
+```{r}
+(harvie_aov_tidy <- tidy(harvie_aov))
+```
+
+Then, we collect the sum of squares and plug them into the equation.
+```{r}
+# Collect sum of squares
+harvie_aov_tidy$sumsq[3]
+harvie_aov_tidy$sumsq[4]
+
+# Calculate partial eta-squared
+(harvie_eta <- harvie_aov_tidy$sumsq[3] / (harvie_aov_tidy$sumsq[3] + harvie_aov_tidy$sumsq[4]))
+```
 
 #### Significant Outliers?
 
@@ -144,7 +177,7 @@ ___
 ___
 I am thankful for my advisor, Dr. Brandt A. Smith for introducing me to R, JASP, and OSL. The discipline of psychology is advocating for preregistered, open materials. His encouragement to utilize open data and open source software has positioned me in the middle of the reproducible movement.
 
-I would still be clicking checkboxes and dropdowns to analyze data if it were not for [DataCamp](https://www.datacamp.com), [Rose Maier](https://rstudio-pubs-static.s3.amazonaws.com/65059_586f394d8eb84f84b1baaf56ffb6b47f.html), and [Alboukadel Kassambara](http://www.sthda.com/english/wiki/r-software).
+I would still be clicking checkboxes and dropdowns to analyze data if it were not for [DataCamp](https://www.datacamp.com), [Rose Maier](https://rstudio-pubs-static.s3.amazonaws.com/65059_586f394d8eb84f84b1baaf56ffb6b47f.html), [Alboukadel Kassambara](http://www.sthda.com/english/wiki/r-software), [Jonathan Baron](https://www.sas.upenn.edu/~baron/from_cattell/rpsych/rpsych.html#htoc60), and the team behind [personality-project](http://personality-project.org/r/r.guide.html#withinone).
 
 ## Dependencies
 This activity was completed using RStudio.
