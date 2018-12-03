@@ -98,7 +98,7 @@ The remaining three assumptions are met after data collection.
 
 3. **No significant outliers** in any of the measurements of the participants. Outliers skew data and affect normality. One-way ANOVA is valid for distributions skewed in the same direction (e.g., distributions of each level positively skewed.). It is assessed with boxplots.
 
-4. **Approximately normal distribution** of the independent variable for each level of the factor. Since the one-way ANOVA is robust, mild violations of normality can be tolerated if the number of observations is uniform across levels. The assumption is assessed with the Shapiro-Wilk test and density curves, or histograms.
+4. **Approximately normal distribution** of the dependent variable for each level of the factor. Since the one-way ANOVA is robust, mild violations of normality can be tolerated if the number of observations is uniform across levels. The assumption is assessed with the Shapiro-Wilk test and density curves, or histograms.
 
 5. **Sphericity**, which states that the differences in variances between all pairs of groups (i.e., dependent variable) are equal. [This assumption](https://biostats.w.uib.no/test-for-sphericity-mauchly-test/) *must* be met. It is assessed with Mauchley's test.
 
